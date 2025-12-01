@@ -69,6 +69,8 @@ export default function TetrisGame() {
   const [highScore, setHighScore] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [gameOver, setGameOver] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchStartY, setTouchStartY] = useState(0);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -207,9 +209,10 @@ export default function TetrisGame() {
   };
 
   useEffect(() => {
+    if (gameOver) return;
     const interval = setInterval(drop, 500);
     return () => clearInterval(interval);
-  }, [current, grid]);
+  }, [current, grid, gameOver]);
 
   useEffect(() => {
     draw();
@@ -225,6 +228,40 @@ export default function TetrisGame() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [current, grid]);
+
+  // Mobile touch controls
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      setTouchStartX(touch.clientX);
+      setTouchStartY(touch.clientY);
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (gameOver) return;
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      const threshold = 30; // pixels
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (deltaX > threshold) move(1);
+        else if (deltaX < -threshold) move(-1);
+      } else {
+        // Vertical swipe
+        if (deltaY > threshold) drop();
+        else if (deltaY < -threshold) rotatePiece();
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [touchStartX, touchStartY, gameOver]);
 
   return (
     <div className="flex flex-col items-center">
@@ -263,6 +300,7 @@ export default function TetrisGame() {
             width={COLS * BLOCK_SIZE}
             height={ROWS * BLOCK_SIZE}
             className="border border-gray-300"
+            style={{ width: "100%", height: "auto" }}
           />
           <p className="mt-4 text-sm text-gray-500">
             Use arrow keys to move and rotate the piece.
