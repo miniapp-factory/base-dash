@@ -300,7 +300,7 @@ export default function TetrisGame() {
             width={COLS * BLOCK_SIZE}
             height={ROWS * BLOCK_SIZE}
             className="border border-gray-300"
-            style={{ width: "100%", height: "auto" }}
+            style={{ width: "100%", height: "auto", maxWidth: "400px" }}
           />
           <p className="mt-4 text-sm text-gray-500">
             Use arrow keys to move and rotate the piece.
