@@ -65,6 +65,9 @@ export default function TetrisGame() {
     x: Math.floor(COLS / 2) - 1,
     y: 0,
   });
+  const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(0);
+  const [message, setMessage] = useState<string | null>(null);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -145,6 +148,19 @@ export default function TetrisGame() {
       const linesCleared = ROWS - cleared.length;
       const newRows = Array.from({ length: linesCleared }, () => Array(COLS).fill(0));
       setGrid([...newRows, ...cleared]);
+
+      // Update score and high score
+      const points = linesCleared * 100;
+      setScore(prev => prev + points);
+      setHighScore(prev => Math.max(prev, score + points));
+
+      // Show BASE message on a Tetris (4 lines cleared)
+      if (linesCleared === 4) {
+        setMessage('BASE');
+      } else {
+        setMessage(null);
+      }
+
       // spawn new piece
       const newShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
       setCurrent({
@@ -204,6 +220,11 @@ export default function TetrisGame() {
 
   return (
     <div className="flex flex-col items-center">
+      <div className="mb-2 text-center">
+        <p>Score: {score}</p>
+        <p>High Score: {highScore}</p>
+        {message && <p className="text-xl font-bold">{message}</p>}
+      </div>
       <canvas
         ref={canvasRef}
         width={COLS * BLOCK_SIZE}
