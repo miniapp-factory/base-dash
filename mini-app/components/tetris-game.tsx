@@ -68,6 +68,7 @@ export default function TetrisGame() {
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
+  const [gameOver, setGameOver] = useState(false);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -163,11 +164,18 @@ export default function TetrisGame() {
 
       // spawn new piece
       const newShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-      setCurrent({
-        shape: newShape,
-        x: Math.floor(COLS / 2) - Math.floor(newShape[0].length / 2),
-        y: 0,
-      });
+      const newX = Math.floor(COLS / 2) - Math.floor(newShape[0].length / 2);
+      const newYPos = 0;
+      // Check if the new piece immediately collides (top overflow)
+      if (collides(newShape, newX, newYPos)) {
+        setGameOver(true);
+      } else {
+        setCurrent({
+          shape: newShape,
+          x: newX,
+          y: newYPos,
+        });
+      }
     }
   };
 
@@ -220,20 +228,47 @@ export default function TetrisGame() {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="mb-2 text-center">
-        <p>Score: {score}</p>
-        <p>High Score: {highScore}</p>
-        {message && <p className="text-xl font-bold">{message}</p>}
-      </div>
-      <canvas
-        ref={canvasRef}
-        width={COLS * BLOCK_SIZE}
-        height={ROWS * BLOCK_SIZE}
-        className="border border-gray-300"
-      />
-      <p className="mt-4 text-sm text-gray-500">
-        Use arrow keys to move and rotate the piece.
-      </p>
+      {gameOver ? (
+        <div className="text-center">
+          <p className="text-2xl font-bold">Game Over</p>
+          <p className="mt-2">Final Score: {score}</p>
+          <button
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded"
+            onClick={() => {
+              setGrid(Array.from({ length: ROWS }, () => Array(COLS).fill(0)));
+              setScore(0);
+              setHighScore(0);
+              setMessage(null);
+              setGameOver(false);
+              const newShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+              setCurrent({
+                shape: newShape,
+                x: Math.floor(COLS / 2) - Math.floor(newShape[0].length / 2),
+                y: 0,
+              });
+            }}
+          >
+            Restart
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-2 text-center">
+            <p>Score: {score}</p>
+            <p>High Score: {highScore}</p>
+            {message && <p className="text-xl font-bold">{message}</p>}
+          </div>
+          <canvas
+            ref={canvasRef}
+            width={COLS * BLOCK_SIZE}
+            height={ROWS * BLOCK_SIZE}
+            className="border border-gray-300"
+          />
+          <p className="mt-4 text-sm text-gray-500">
+            Use arrow keys to move and rotate the piece.
+          </p>
+        </>
+      )}
     </div>
   );
 }
